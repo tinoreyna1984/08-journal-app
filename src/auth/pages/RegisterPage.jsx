@@ -11,7 +11,7 @@ import {
 import { useForm } from "../../hooks/useForm";
 import { AuthLayout } from "../layout/AuthLayout";
 import { useDispatch, useSelector } from "react-redux";
-import { startCreatingUserWithEmailPassword } from "../../redux/slices/auth/authSlices";
+import { startCreatingUserWithEmailPassword } from "../../redux/slices/auth/authSlice";
 
 export const RegisterPage = () => {
   const { status, errorMessage } = useSelector((state) => state.auth);

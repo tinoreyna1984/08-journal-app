@@ -12,11 +12,13 @@
  */
 
 import { configureStore } from '@reduxjs/toolkit'
-import { authSlice } from '../slices/auth/authSlices' // estilo Fernando Herrera
+import { authSlice } from '../slices/auth/authSlice' // estilo Fernando Herrera
+import { journalSlice } from '../slices/journal/journalSlice'
 
 export const store = configureStore({
     reducer: {
       auth: authSlice.reducer, // estilo Fernando Herrera
+      journal: journalSlice.reducer, // estilo Fernando Herrera
     },
     // para el RTK Query API se requiere el middleware
     /* middleware: (getDefaultMiddleware) => getDefaultMiddleware()

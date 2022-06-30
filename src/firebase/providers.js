@@ -77,9 +77,9 @@ export const loginWithEmailAndPassword = async ({ email, password }) => {
       email,
       password
     );
-    //console.log('user in provider: ', result.user);
+    
     const { uid, photoURL, displayName } = result.user;
-    //console.log({ uid, photoURL, displayName, email });
+    
     return {
       ok: true,
       uid,

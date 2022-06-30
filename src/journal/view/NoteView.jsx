@@ -1,9 +1,33 @@
 import { SaveOutlined } from "@mui/icons-material";
 import { Button, Grid, TextField, Typography } from "@mui/material";
-import React from "react";
+import React, { useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { ImageGallery } from "../components/ImageGallery";
+import { useForm } from '../../hooks/useForm'
+import { setActiveNote, startSavingNote } from "../../redux/slices/journal/journalSlice";
 
 export const NoteView = () => {
+  
+  const {active : note} = useSelector((state) => state.journal);
+  //console.log(note);
+
+  const { body, title, date, onInputChange, formState } = useForm(note);
+
+  const dateString = useMemo(() => {
+    const newDate = new Date(date);
+    return newDate.toUTCString();
+  }, [date]);
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(setActiveNote(formState));
+  }, [formState])
+  
+  const handleSave = () => {
+    dispatch(startSavingNote());
+  }
+
   return (
     <Grid
       className="animate__animated animate__fadeIn animate__faster"
@@ -15,11 +39,11 @@ export const NoteView = () => {
     >
       <Grid item>
         <Typography fontSize={39} fontWeight="light">
-          29/07/2022
+          {dateString}
         </Typography>
       </Grid>
       <Grid item>
-        <Button>
+        <Button onClick={handleSave}>
           <SaveOutlined sx={{ fontSize: "30", mr: 1 }} />
           Guardar
         </Button>
@@ -32,6 +56,9 @@ export const NoteView = () => {
           placeholder="Ingrese un título"
           label="Título"
           sx={{ border: "none", mb: 1 }}
+          name="title"
+          value={title}
+          onChange={onInputChange}
         />
         <TextField
           type="text"
@@ -41,6 +68,9 @@ export const NoteView = () => {
           multiline
           minRows={10}
           sx={{ border: "none", mb: 1 }}
+          name="body"
+          value={body}
+          onChange={onInputChange}
         />
       </Grid>
       <ImageGallery />
