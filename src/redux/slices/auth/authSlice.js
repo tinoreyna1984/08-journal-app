@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { signInWithGoogle, registerWithEmailAndPassword, loginWithEmailAndPassword, logoutFirebase } from '../../../firebase/providers';
+import { clearNotesLogout } from '../journal/journalSlice';
 
 export const authSlice = createSlice({
   name: 'auth',
@@ -76,6 +77,7 @@ export const startLoginWithEmailPassword = ({email, password}) => {
 export const startLogout = () => {
   return async (dispatch) => {
     await logoutFirebase();
+    dispatch(clearNotesLogout());
     dispatch(logout({errorMessage: 'Logged out'}));
   }
 }

@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { collection, doc, setDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, setDoc } from "firebase/firestore";
 import { FirebaseDB } from "../../../firebase/config";
+import { fileUpload } from "../../../helpers/fileUpload";
 import { loadNotes } from "../../../helpers/loadNotes";
 
 export const journalSlice = createSlice({
@@ -13,20 +14,23 @@ export const journalSlice = createSlice({
   },
   reducers: {
     // del action estoy sacando directamente el payload
+    savingNewNote: (state, action) => {
+      state.isSaving = true;
+    },
     addNewEmptyNote: (state, action) => {
-        state.notes.push(action.payload);
-        state.isSaving = false;
+      state.notes.push(action.payload);
+      state.isSaving = false;
     },
     setActiveNote: (state, action) => {
-        state.active = action.payload;
-        state.messageSaved = '';
+      state.active = action.payload;
+      state.messageSaved = "";
     },
     setNotes: (state, action) => {
-        state.notes = action.payload;
+      state.notes = action.payload;
     },
     setSaving: (state) => {
       state.isSaving = true;
-      state.messageSaved = '';
+      state.messageSaved = "";
     },
     updateNote: (state, action) => {
       state.isSaving = false;
@@ -38,10 +42,20 @@ export const journalSlice = createSlice({
       });
       state.messageSaved = `La nota titulada "${action.payload.title}" se actualizó correctamente`;
     },
-    deleteNoteById: (state, action) => {},
-    savingNewNote: (state, action) => {
-        state.isSaving = true;
-    }
+    setPhotosToActiveNote: (state, action) => {
+      state.active.imageUrls = [...state.active.imageUrls, ...action.payload];
+      state.isSaving = false;
+    },
+    clearNotesLogout: (state) => {
+      state.isSaving = false;
+      state.messageSaved = '';
+      state.notes = [];
+      state.active = null;
+    },
+    deleteNoteById: (state, action) => {
+      state.active = null;
+      state.notes = state.notes.filter(note => note.id !== action.payload);
+    },
   },
 });
 
@@ -49,7 +63,6 @@ export const journalSlice = createSlice({
 
 export const startNewNote = () => {
   return async (dispatch, getState) => {
-    
     dispatch(savingNewNote());
 
     const { uid } = getState().auth;
@@ -63,7 +76,7 @@ export const startNewNote = () => {
 
     // crear un documento (el cual contiene diversas colecciones)
     const newDoc = doc(collection(FirebaseDB, `${uid}/journal/notes`));
-    const setDocResp = await setDoc(newDoc, newNote);
+    await setDoc(newDoc, newNote);
 
     newNote.id = newDoc.id; // crea ID de nota
 
@@ -73,31 +86,57 @@ export const startNewNote = () => {
 };
 
 export const startLoadingNotes = () => {
-    return async (dispatch, getState) => {
-        const { uid } = getState().auth;
-        //console.log(uid);
-        if(!uid) throw new Error('El uid es requerido');
-        
-        const notes = await loadNotes(uid);
-        //console.log(notes)
-        dispatch(setNotes(notes));
-    }
-}
+  return async (dispatch, getState) => {
+    const { uid } = getState().auth;
+    if (!uid) throw new Error("El uid es requerido");
+
+    const notes = await loadNotes(uid);
+    
+    dispatch(setNotes(notes));
+  };
+};
 
 export const startSavingNote = () => {
   return async (dispatch, getState) => {
     dispatch(setSaving());
 
     const { uid } = getState().auth;
-    const {active: note} = getState().journal;
+    const { active: note } = getState().journal;
 
-    const noteToFirestore = {...note};
+    const noteToFirestore = { ...note };
     delete noteToFirestore.id;
 
     const docRef = doc(FirebaseDB, `${uid}/journal/notes/${note.id}`);
-    await setDoc(docRef, noteToFirestore, {merge: true});
+    await setDoc(docRef, noteToFirestore, { merge: true });
 
     dispatch(updateNote(note));
+  };
+};
+
+export const startUploadingFiles = (files = []) => {
+  return async (dispatch) => {
+    dispatch(setSaving());
+
+    // carga simultánea de archivos por promesas
+    const fileUploadPromises = [];
+    for (const file of files) {
+      fileUploadPromises.push(fileUpload(file));
+    }
+    const photoUrls = await Promise.all(fileUploadPromises);
+
+    dispatch(setPhotosToActiveNote(photoUrls));
+  };
+};
+
+export const startDeletingNote = () => {
+  return async (dispatch, getState) => {
+    const {uid} = getState().auth;
+    const {active: note} = getState().journal;
+
+    const docRef = doc(FirebaseDB, `${uid}/journal/notes/${note.id}`);
+    await deleteDoc(docRef);
+
+    dispatch(deleteNoteById(note.id));
   }
 }
 
@@ -107,9 +146,11 @@ export const startSavingNote = () => {
 export const {
   addNewEmptyNote,
   setActiveNote,
+  clearNotesLogout,
   setNotes,
   setSaving,
   updateNote,
   deleteNoteById,
+  setPhotosToActiveNote,
   savingNewNote,
 } = journalSlice.actions;

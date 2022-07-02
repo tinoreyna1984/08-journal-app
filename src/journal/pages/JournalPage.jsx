@@ -11,10 +11,6 @@ export const JournalPage = () => {
   const state = useSelector((state) => state.journal);
   const { isSaving, active } = state;
 
-  /* console.log(state);
-  console.log(!!active); */
-  //console.log(notes)
-
   const dispatch = useDispatch();
 
   const onClickNewNote = () => {

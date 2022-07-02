@@ -4,22 +4,16 @@ import React, { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setActiveNote } from "../../redux/slices/journal/journalSlice";
 
-export const SideBarItem = ({note}) => {
+export const SideBarItem = ({ title = '', body, id, date, imageUrls = [] }) => {
 
     const dispatch = useDispatch();
-
-    /* const status = useSelector((state) => state.journal);
-    console.log(status) */
-
-    const { title, body, date } = note;
 
     const newTitle = useMemo(() => {
         return title.length > 20 ? `${title.substring(0, 20)}...` : title;
     }, [title]);
 
     const onClick = () => {
-        //console.log('hice click en la nota');
-        dispatch(setActiveNote(note));
+        dispatch(setActiveNote({ title, body, id, date, imageUrls }));
     }
 
   return (
